@@ -48,6 +48,7 @@ pub enum Event {
     ReceivedMessage(Message),
     UserOnline(String),
     UserOffline(String, Option<String>),
+    UserTyping(String),
     NickChange(String, String),
     Timer(String),
     Other(String),
@@ -75,9 +76,10 @@ impl Event {
                 MessageContent::Me(_) => EventType::MeMessage,
                 MessageContent::Image => EventType::ImageMessage,
             },
-            Event::UserOnline(_) | Event::UserOffline(_, _) | Event::NickChange(_, _) => {
-                EventType::UserStatus
-            }
+            Event::UserOnline(_)
+            | Event::UserOffline(_, _)
+            | Event::UserTyping(_)
+            | Event::NickChange(_, _) => EventType::UserStatus,
             Event::Timer(_) => EventType::Timer,
             Event::Other(_) => EventType::Other,
         }

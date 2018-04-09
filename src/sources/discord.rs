@@ -116,6 +116,24 @@ impl EventSource for DiscordSource {
 }
 
 impl DiscordSource {
+    fn get_user_in_channel(state: &State, channel_id: ChannelId, user_id: UserId) -> &str {
+        use discord::ChannelRef::*;
+        match state.find_channel(channel_id).expect("Unknown channel") {
+            Private(prv) => &prv.recipient.name,
+            Public(srv, _) => srv.members
+                .iter()
+                .find(|m| m.user.id == user_id)
+                .map(|m| &m.user.name)
+                .expect("Unknown user"),
+            Group(group) => group
+                .recipients
+                .iter()
+                .find(|m| m.id == user_id)
+                .map(|m| &m.name)
+                .expect("Unknown user"),
+        }
+    }
+
     fn handle_event(
         event: ::discord::model::Event,
         state: &State,
@@ -125,7 +143,17 @@ impl DiscordSource {
         use discord::ChannelRef::*;
         use discord::model::Event::*;
         match event {
-            TypingStart { .. } => (),
+            TypingStart {
+                user_id,
+                channel_id,
+                ..
+            } => {
+                let user = Self::get_user_in_channel(state, channel_id, user_id);
+                let _ = sender.send(SourceEvent {
+                    source: id.clone(),
+                    event: Event::UserTyping(user.to_owned()),
+                });
+            }
             PresenceUpdate { .. } => {}
             MessageCreate(msg) => {
                 // don't react to own messages
