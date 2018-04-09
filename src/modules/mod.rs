@@ -7,9 +7,8 @@ pub enum ResumeEventHandling {
     Resume,
 }
 
+pub type ModuleBuilder = fn(String, Option<Value>) -> Box<Module>;
+
 pub trait Module {
-    fn create(id: String, config: Option<Value>) -> Self
-    where
-        Self: Sized;
     fn handle_event(&mut self, core: &mut CoreAPI, event: SourceEvent) -> ResumeEventHandling;
 }

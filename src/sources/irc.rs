@@ -25,28 +25,26 @@ pub struct IrcSource {
     state: SourceState,
 }
 
-impl EventSourceBuilder for IrcSource {
-    type Source = Self;
-
+impl IrcSource {
     /// Creates an IrcSource with the given configuration
-    fn build_source(
+    pub fn new(
         source_id: SourceId,
         sender: Sender<SourceEvent>,
         config: Option<Value>,
-    ) -> IrcSource {
+    ) -> Box<EventSource> {
         let config = config.expect(&format!("No config given for IRC source {:?}!", source_id));
         let config: Config = serde_json::from_value(config).ok().expect(&format!(
             "Invalid configuration supplied to IRC source {:?}",
             source_id
         ));
 
-        IrcSource {
+        Box::new(IrcSource {
             id: source_id.clone(),
             nick: config.nickname().to_owned(),
             config,
             sender,
             state: SourceState::Disconnected,
-        }
+        })
     }
 }
 
@@ -92,10 +90,6 @@ fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
 impl EventSource for IrcSource {
     fn get_nick(&self) -> &str {
         &self.nick
-    }
-
-    fn get_type(&self) -> SourceType {
-        SourceType::Irc
     }
 
     fn connect(&mut self) -> SourceResult<()> {

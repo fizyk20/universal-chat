@@ -1,13 +1,12 @@
 use core::EventType;
 use serde_json::{self, Value};
-use sources::SourceType;
 use std::collections::HashMap;
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
 
-/// Structure representing the bot configuration along with
+/// Structure representing the configuration along with
 /// the path to the file where it is saved
 #[derive(Clone)]
 pub struct Config {
@@ -18,13 +17,14 @@ pub struct Config {
 /// A definition of an event source
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SourceDef {
-    pub source_type: SourceType,
+    pub source_type: String,
     pub config: Option<Value>,
 }
 
 /// A definition of a module
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleDef {
+    pub module_type: String,
     pub config: Option<Value>,
     pub priority: u8,
     pub subscriptions: HashMap<String, Vec<EventType>>,
@@ -53,15 +53,6 @@ impl Config {
             path: path_buf,
             inner: serde_json::from_str(&config).unwrap(),
         }
-    }
-
-    /// Saves the configuration to the file it was read from (overwrites the previous one)
-    pub fn save(&self) {
-        let mut file = fs::File::create(&self.path)
-            .ok()
-            .expect(&format!("Couldn't create file {:?}", self.path));
-        let json = serde_json::to_string(&self.inner).unwrap();
-        let _ = file.write(json.as_bytes());
     }
 }
 

@@ -1,5 +1,3 @@
-use config::CONFIG;
-
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SourceId(pub String);
 
@@ -39,13 +37,6 @@ pub struct Message {
     pub author: String,
     pub channel: Channel,
     pub content: MessageContent,
-}
-
-#[derive(Clone, Debug)]
-pub struct Command {
-    pub sender: String,
-    pub channel: Channel,
-    pub params: Vec<String>,
 }
 
 /// Type representing events that can be sent by the sources

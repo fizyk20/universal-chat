@@ -19,6 +19,10 @@ mod core;
 mod logger;
 mod modules;
 
+pub use core::*;
+pub use modules::*;
+pub use sources::*;
+
 #[cfg(test)]
 mod tests {
     #[test]

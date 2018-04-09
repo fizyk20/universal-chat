@@ -29,15 +29,13 @@ pub struct DiscordSource {
     sender: Sender<SourceEvent>,
 }
 
-impl EventSourceBuilder for DiscordSource {
-    type Source = Self;
-
+impl DiscordSource {
     /// Creates an DiscordSource with the given configuration
-    fn build_source(
+    pub fn new(
         source_id: SourceId,
         sender: Sender<SourceEvent>,
         config: Option<Value>,
-    ) -> DiscordSource {
+    ) -> Box<EventSource> {
         let config = config.expect(&format!(
             "No config given for Discord source {:?}!",
             source_id
@@ -47,12 +45,12 @@ impl EventSourceBuilder for DiscordSource {
             source_id
         ));
 
-        DiscordSource {
+        Box::new(DiscordSource {
             id: source_id.clone(),
             config,
             state: SourceState::Disconnected,
             sender,
-        }
+        })
     }
 }
 
@@ -63,10 +61,6 @@ impl EventSource for DiscordSource {
         } else {
             ""
         }
-    }
-
-    fn get_type(&self) -> SourceType {
-        SourceType::Discord
     }
 
     fn connect(&mut self) -> SourceResult<()> {
@@ -95,7 +89,7 @@ impl EventSource for DiscordSource {
         Ok(())
     }
 
-    fn join(&mut self, channel: &str) -> SourceResult<()> {
+    fn join(&mut self, _: &str) -> SourceResult<()> {
         Ok(())
     }
 
@@ -131,7 +125,7 @@ impl DiscordSource {
         use discord::model::Event::*;
         match event {
             TypingStart { .. } => (),
-            PresenceUpdate { presence, .. } => {}
+            PresenceUpdate { .. } => {}
             MessageCreate(msg) => {
                 // don't react to own messages
                 if msg.author.id == state.user().id {

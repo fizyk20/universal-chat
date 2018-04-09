@@ -38,15 +38,13 @@ pub struct SlackSource {
     sender: Sender<SourceEvent>,
 }
 
-impl EventSourceBuilder for SlackSource {
-    type Source = Self;
-
+impl SlackSource {
     /// Creates an SlackSource with the given configuration
-    fn build_source(
+    pub fn new(
         source_id: SourceId,
         sender: Sender<SourceEvent>,
         config: Option<Value>,
-    ) -> SlackSource {
+    ) -> Box<EventSource> {
         let config = config.expect(&format!(
             "No config given for Slack source {:?}!",
             source_id
@@ -56,17 +54,15 @@ impl EventSourceBuilder for SlackSource {
             source_id
         ));
 
-        SlackSource {
+        Box::new(SlackSource {
             id: source_id.clone(),
             config,
             state: SourceState::Disconnected,
             sender,
-        }
+        })
     }
-}
 
-impl SlackSource {
-    fn get_id(&self) -> &str {
+    pub fn get_id(&self) -> &str {
         self.state
             .start_response()
             .and_then(|resp| resp.slf.as_ref())
@@ -82,10 +78,6 @@ impl EventSource for SlackSource {
             .and_then(|resp| resp.slf.as_ref())
             .and_then(|user| user.name.as_ref().map(|s| s as &str))
             .unwrap_or("[no nick]")
-    }
-
-    fn get_type(&self) -> SourceType {
-        SourceType::Slack
     }
 
     fn connect(&mut self) -> SourceResult<()> {

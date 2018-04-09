@@ -5,15 +5,15 @@ use std::io;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
 
-pub struct StdinSource {
-    handle: JoinHandle<()>,
-}
+pub struct StdinSource(JoinHandle<()>);
 
-impl EventSourceBuilder for StdinSource {
-    type Source = StdinSource;
-
+impl StdinSource {
     /// Creates the Stdin source - a simple loop sending lines read from the standard input
-    fn build_source(source_id: SourceId, sender: Sender<SourceEvent>, _: Option<Value>) -> Self {
+    pub fn new(
+        source_id: SourceId,
+        sender: Sender<SourceEvent>,
+        _: Option<Value>,
+    ) -> Box<EventSource> {
         let handle = thread::spawn(move || {
             let stdin = io::stdin();
             loop {
@@ -27,17 +27,13 @@ impl EventSourceBuilder for StdinSource {
                     .unwrap();
             }
         });
-        StdinSource { handle }
+        Box::new(StdinSource(handle))
     }
 }
 
 impl EventSource for StdinSource {
     fn get_nick(&self) -> &str {
         ""
-    }
-
-    fn get_type(&self) -> SourceType {
-        SourceType::Stdin
     }
 
     fn connect(&mut self) -> SourceResult<()> {

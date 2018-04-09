@@ -3,9 +3,10 @@ use config::CONFIG;
 use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
 use logger::*;
 use modules::*;
+use serde_json::Value;
 use sources::*;
 use std::collections::{HashMap, HashSet};
-use std::sync::mpsc::{channel, Receiver};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use timer::{Guard, MessageTimer};
 
 struct ModuleDef {
@@ -28,11 +29,16 @@ pub struct Core {
     api: CoreAPI,
 }
 
+pub type EventSourceBuilder = fn(SourceId, Sender<SourceEvent>, Option<Value>) -> Box<EventSource>;
+
 impl Core {
     /// Creates the core
     /// Sets up the event passing channel, reads the config and
     /// creates and configures appropriate event sources and modules
-    pub fn new() -> Self {
+    pub fn new(
+        builders: &HashMap<String, EventSourceBuilder>,
+        mod_builders: &HashMap<String, ModuleBuilder>,
+    ) -> Self {
         let (sender, receiver) = channel();
 
         let mut sources = HashMap::new();
@@ -40,34 +46,31 @@ impl Core {
             let sources_def = &CONFIG.lock().unwrap().sources;
             for (id, def) in sources_def {
                 let source_id = SourceId(id.clone());
-                let source: Box<EventSource> = match def.source_type {
-                    SourceType::Irc => Box::new(IrcSource::build_source(
-                        source_id.clone(),
-                        sender.clone(),
-                        def.config.clone(),
-                    )),
-                    SourceType::Stdin => Box::new(StdinSource::build_source(
-                        source_id.clone(),
-                        sender.clone(),
-                        None,
-                    )),
-                    SourceType::Slack => Box::new(SlackSource::build_source(
-                        source_id.clone(),
-                        sender.clone(),
-                        def.config.clone(),
-                    )),
-                    SourceType::Discord => Box::new(DiscordSource::build_source(
-                        source_id.clone(),
-                        sender.clone(),
-                        def.config.clone(),
-                    )),
-                    // _ => unreachable!(),
-                };
-                sources.insert(source_id, source);
+                if let Some(builder) = builders.get(&def.source_type) {
+                    let source: Box<EventSource> =
+                        builder(source_id.clone(), sender.clone(), def.config.clone());
+                    sources.insert(source_id, source);
+                }
             }
         }
 
         let mut modules = vec![];
+        {
+            let modules_def = &CONFIG.lock().unwrap().modules;
+            for (id, def) in modules_def {
+                if let Some(builder) = mod_builders.get(&def.module_type) {
+                    let module: Box<Module> = builder(id.clone(), def.config.clone());
+                    modules.push(ModuleDef {
+                        priority: def.priority,
+                        subscriptions: def.subscriptions
+                            .iter()
+                            .map(|(id, set)| (SourceId(id.clone()), set.iter().cloned().collect()))
+                            .collect(),
+                        object: module,
+                    });
+                }
+            }
+        }
 
         let timer = MessageTimer::new(sender.clone());
         let log_folder = CONFIG.lock().unwrap().log_folder.clone();
