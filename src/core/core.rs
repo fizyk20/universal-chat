@@ -35,10 +35,7 @@ impl Core {
     /// Creates the core
     /// Sets up the event passing channel, reads the config and
     /// creates and configures appropriate event sources and modules
-    pub fn new(
-        builders: &HashMap<String, EventSourceBuilder>,
-        mod_builders: &HashMap<String, ModuleBuilder>,
-    ) -> Self {
+    pub fn new(mod_builders: &HashMap<String, ModuleBuilder>) -> Self {
         let (sender, receiver) = channel();
 
         let mut sources = HashMap::new();
@@ -46,7 +43,7 @@ impl Core {
             let sources_def = &CONFIG.lock().unwrap().sources;
             for (id, def) in sources_def {
                 let source_id = SourceId(id.clone());
-                if let Some(builder) = builders.get(&def.source_type) {
+                if let Some(builder) = BUILDERS.get(&def.source_type) {
                     let source: Box<EventSource> =
                         builder(source_id.clone(), sender.clone(), def.config.clone());
                     sources.insert(source_id, source);

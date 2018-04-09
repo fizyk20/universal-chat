@@ -1,5 +1,7 @@
 extern crate chrono;
+#[cfg(feature = "discord")]
 extern crate discord;
+#[cfg(feature = "irc")]
 extern crate irc;
 #[macro_use]
 extern crate lazy_static;
@@ -9,8 +11,8 @@ extern crate rand;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+#[cfg(feature = "slack")]
 extern crate slack;
-extern crate slack_api;
 extern crate timer;
 
 mod sources;

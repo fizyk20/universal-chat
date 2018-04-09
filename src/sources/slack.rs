@@ -1,8 +1,9 @@
 use core::*;
 use serde_json::{self, Value};
 use slack::{EventHandler, RtmClient};
-use slack_api::rtm::StartResponse;
+use slack::api::rtm::StartResponse;
 use sources::*;
+use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
 
 /// A helper enum for SlackSource

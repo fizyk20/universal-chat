@@ -12,7 +12,6 @@ lazy_static = "0.2"
 quick-error = "1.2"
 rand = "0.3"
 timer = "0.2"
-irc = "0.12"
-slack = { git = "https://github.com/fizyk20/slack-rs.git", branch = "less-blocking-reads" }
-slack_api = "0.18"
-discord = { git = "https://github.com/fizyk20/discord-rs.git", branch = "modifications" }
+irc = { version = "0.12", optional = true }
+slack = { git = "https://github.com/fizyk20/slack-rs.git", branch = "less-blocking-reads", optional = true }
+discord = { git = "https://github.com/fizyk20/discord-rs.git", branch = "modifications", optional = true }

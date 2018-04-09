@@ -4,6 +4,7 @@ use discord::Error as DiscordError;
 use discord::model::{ChannelId, CurrentUser, UserId};
 use serde_json::{self, Value};
 use sources::*;
+use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
 
 /// A helper enum for DiscordSource
