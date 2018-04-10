@@ -1,5 +1,5 @@
 use chrono::Duration;
-use config::CONFIG;
+use config::Config;
 use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
 use logger::*;
 use modules::*;
@@ -35,12 +35,12 @@ impl Core {
     /// Creates the core
     /// Sets up the event passing channel, reads the config and
     /// creates and configures appropriate event sources and modules
-    pub fn new(mod_builders: &HashMap<String, ModuleBuilder>) -> Self {
+    pub fn new<T>(mod_builders: &HashMap<String, ModuleBuilder>, config: &Config<T>) -> Self {
         let (sender, receiver) = channel();
 
         let mut sources = HashMap::new();
         {
-            let sources_def = &CONFIG.lock().unwrap().sources;
+            let sources_def = &config.sources;
             for (id, def) in sources_def {
                 let source_id = SourceId(id.clone());
                 if let Some(builder) = BUILDERS.get(&def.source_type) {
@@ -53,7 +53,7 @@ impl Core {
 
         let mut modules = vec![];
         {
-            let modules_def = &CONFIG.lock().unwrap().modules;
+            let modules_def = &config.modules;
             for (id, def) in modules_def {
                 if let Some(builder) = mod_builders.get(&def.module_type) {
                     let module: Box<Module> = builder(id.clone(), def.config.clone());
@@ -70,7 +70,7 @@ impl Core {
         }
 
         let timer = MessageTimer::new(sender.clone());
-        let log_folder = CONFIG.lock().unwrap().log_folder.clone();
+        let log_folder = config.log_folder.clone();
 
         Core {
             event_rx: receiver,

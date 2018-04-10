@@ -1,4 +1,5 @@
 use core::EventType;
+use serde::de::DeserializeOwned;
 use serde_json::{self, Value};
 use std::collections::HashMap;
 use std::fs;
@@ -9,9 +10,9 @@ use std::path::{Path, PathBuf};
 /// Structure representing the configuration along with
 /// the path to the file where it is saved
 #[derive(Clone)]
-pub struct Config {
+pub struct Config<T> {
     path: PathBuf,
-    inner: ConfigInner,
+    inner: ConfigInner<T>,
 }
 
 /// A definition of an event source
@@ -33,15 +34,19 @@ pub struct ModuleDef {
 /// Inner structure with configuration data, read by Serde from a file
 /// in JSON format
 #[derive(Clone, Serialize, Deserialize)]
-pub struct ConfigInner {
+pub struct ConfigInner<T> {
     pub log_folder: String,
     pub sources: HashMap<String, SourceDef>,
     pub modules: HashMap<String, ModuleDef>,
+    pub custom: T,
 }
 
-impl Config {
+impl<T> Config<T> {
     /// Loads configuration from a file and returns the resulting Config object
-    pub fn new<P: AsRef<Path>>(path: P) -> Config {
+    pub fn new<P: AsRef<Path>>(path: P) -> Config<T>
+    where
+        T: DeserializeOwned,
+    {
         let path_buf = path.as_ref().to_path_buf();
         let mut file = fs::File::open(path)
             .ok()
@@ -56,20 +61,25 @@ impl Config {
     }
 }
 
-impl Deref for Config {
-    type Target = ConfigInner;
+impl<T> Deref for Config<T> {
+    type Target = ConfigInner<T>;
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl DerefMut for Config {
+impl<T> DerefMut for Config<T> {
     fn deref_mut(&mut self) -> &mut <Self as Deref>::Target {
         &mut self.inner
     }
 }
 
 /// A global object to access the configuration
-lazy_static! {
-    pub static ref CONFIG : ::std::sync::Mutex<Config> = ::std::sync::Mutex::new(Config::new("config.json"));
+#[macro_export]
+macro_rules! config {
+    ($T: ty, $fname: expr) => {
+        lazy_static! {
+            pub static ref CONFIG : ::std::sync::Mutex<$crate::Config<$T>> = ::std::sync::Mutex::new($crate::Config::new($fname));
+        }
+    }
 }
