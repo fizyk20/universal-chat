@@ -76,11 +76,17 @@ impl EventSource for DiscordSource {
         let id = self.id.clone();
         let sender = self.sender.clone();
         let receiver = thread::spawn(move || loop {
-            if let Ok(event) = connection.recv_event() {
-                state.update(&event);
-                Self::handle_event(event, &state, &id, &sender);
-            } else {
-                break;
+            match connection.recv_event() {
+                Ok(event) => {
+                    state.update(&event);
+                    Self::handle_event(event, &state, &id, &sender);
+                }
+                Err(e) => {
+                    let _ = sender.send(SourceEvent {
+                        source: id.clone(),
+                        event: Event::Other(format!("{:?}", e)),
+                    });
+                }
             }
         });
         let user = discord
