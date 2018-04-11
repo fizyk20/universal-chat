@@ -84,8 +84,9 @@ impl EventSource for DiscordSource {
                 Err(e) => {
                     let _ = sender.send(SourceEvent {
                         source: id.clone(),
-                        event: Event::Other(format!("{:?}", e)),
+                        event: Event::Disconnected(format!("{:?}", e)),
                     });
+                    break;
                 }
             }
         });
@@ -117,7 +118,7 @@ impl EventSource for DiscordSource {
     }
 
     fn reconnect(&mut self) -> SourceResult<()> {
-        Ok(())
+        self.connect()
     }
 }
 

@@ -113,6 +113,7 @@ impl Core {
                 }
                 MessageContent::Image => format!("[Image]"),
             },
+            Event::Disconnected(ref txt) => format!("Disconnected; reason: {}", txt),
             Event::Other(ref txt) => txt.clone(),
             _ => format!("{:?}", event.event),
         };
@@ -145,6 +146,13 @@ impl Core {
             if module.handle_event(&mut self.api, event.clone()) == ResumeEventHandling::Stop {
                 break;
             }
+        }
+
+        if let Event::Disconnected(_) = event.event {
+            self.api
+                .sources
+                .get_mut(&event.source)
+                .map(|source| source.reconnect());
         }
     }
 }

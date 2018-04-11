@@ -159,7 +159,7 @@ impl EventHandler for SlackHandler {
     fn on_close(&mut self, _: &RtmClient) {
         let _ = self.sender.send(SourceEvent {
             source: self.id.clone(),
-            event: Event::Disconnected,
+            event: Event::Disconnected("on_close".to_owned()),
         });
     }
 

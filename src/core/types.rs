@@ -43,7 +43,7 @@ pub struct Message {
 #[derive(Clone, Debug)]
 pub enum Event {
     Connected,
-    Disconnected,
+    Disconnected(String),
     DirectInput(String),
     ReceivedMessage(Message),
     UserOnline(String),
@@ -69,7 +69,7 @@ pub enum EventType {
 impl Event {
     pub fn get_type(&self) -> EventType {
         match *self {
-            Event::Connected | Event::Disconnected => EventType::Connection,
+            Event::Connected | Event::Disconnected(_) => EventType::Connection,
             Event::DirectInput(_) => EventType::TextMessage,
             Event::ReceivedMessage(ref msg) => match msg.content {
                 MessageContent::Text(_) => EventType::TextMessage,
