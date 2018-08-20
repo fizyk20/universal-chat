@@ -1,7 +1,9 @@
 use core::{Channel, EventSourceBuilder, MessageContent, SourceId};
 #[cfg(feature = "irc")]
-use irc::error::Error as IrcError;
+use irc::error::IrcError;
 use std::collections::HashMap;
+#[cfg(feature = "irc")]
+use std::sync::mpsc::RecvError;
 
 #[cfg(feature = "discord")]
 pub mod discord;
@@ -58,6 +60,9 @@ quick_error! {
         InvalidChannel(id: SourceId, ch: Channel) {}
         InvalidMessage(id: SourceId, msg: MessageContent) {}
         IrcError(err: IrcError) {
+            from()
+        }
+        RecvError(err: RecvError) {
             from()
         }
         Other(txt: String) {}

@@ -2,13 +2,13 @@ use core::*;
 use irc::client::prelude::*;
 use serde_json::{self, Value};
 use sources::*;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{channel, Sender};
 use std::thread::{self, JoinHandle};
 
 /// A helper enum for IrcSource
 enum SourceState {
     Disconnected,
-    Connected(IrcServer, JoinHandle<SourceResult<()>>),
+    Connected(IrcClient, JoinHandle<SourceResult<()>>),
 }
 
 /// An IRC event source
@@ -40,7 +40,10 @@ impl IrcSource {
 
         Box::new(IrcSource {
             id: source_id.clone(),
-            nick: config.nickname().to_owned(),
+            nick: config
+                .nickname()
+                .expect("Couldn't get the IRC nickname!")
+                .to_owned(),
             config,
             sender,
             state: SourceState::Disconnected,
@@ -51,7 +54,8 @@ impl IrcSource {
 fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
     use irc::client::prelude::Command::*;
     use irc::client::prelude::Response::*;
-    let sender = msg.prefix
+    let sender = msg
+        .prefix
         .clone()
         .unwrap_or_else(|| "".to_string())
         .chars()
@@ -60,17 +64,15 @@ fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
     match msg.command {
         PING(_, _) => vec![],
         PONG(_, _) => vec![],
-        PRIVMSG(from, txt) => vec![
-            Event::ReceivedMessage(::core::Message {
-                author: sender,
-                channel: if from.starts_with("#") {
-                    Channel::Channel(from)
-                } else {
-                    Channel::User(from)
-                },
-                content: MessageContent::Text(txt),
-            }),
-        ],
+        PRIVMSG(from, txt) => vec![Event::ReceivedMessage(::core::Message {
+            author: sender,
+            channel: if from.starts_with("#") {
+                Channel::Channel(from)
+            } else {
+                Channel::User(from)
+            },
+            content: MessageContent::Text(txt),
+        })],
         NICK(new_nick) => vec![Event::NickChange(sender, new_nick)],
         JOIN(_, _, _) => vec![Event::UserOnline(sender)],
         PART(_, comment) | QUIT(comment) => vec![Event::UserOffline(sender, comment)],
@@ -93,17 +95,20 @@ impl EventSource for IrcSource {
     }
 
     fn connect(&mut self) -> SourceResult<()> {
-        let server = IrcServer::from_config(self.config.clone())?;
-
         // create clones of some values for the event thread
-        let thread_server = server.clone();
         let thread_sender = self.sender.clone();
         let source_id = self.id.clone();
 
+        let (tx, rx) = channel();
+        let config = self.config.clone();
+
         // create the event handling thread
         let handle = thread::spawn(move || -> SourceResult<()> {
-            thread_server.identify()?;
-            let _ = thread_server.for_each_incoming(|message| {
+            let mut reactor = IrcReactor::new()?;
+            let client = reactor.prepare_client_and_connect(&config)?;
+
+            client.identify()?;
+            reactor.register_client_with_handler(client.clone(), move |_, message| {
                 let events = message_to_events(message);
                 for event in events {
                     let _ = thread_sender.send(SourceEvent {
@@ -111,12 +116,20 @@ impl EventSource for IrcSource {
                         event,
                     });
                 }
+                Ok(())
             });
+
+            // send a copy of the client to the external thread
+            let _ = tx.send(client);
+
+            reactor.run()?;
             Ok(())
         });
 
+        // receive the client from the reactor thread
+        let client = rx.recv()?;
         // save the server object and thread handle
-        self.state = SourceState::Connected(server, handle);
+        self.state = SourceState::Connected(client, handle);
         Ok(())
     }
 
@@ -127,7 +140,7 @@ impl EventSource for IrcSource {
     /// Sends a message to a user or an IRC channel
     fn send(&mut self, dst: Channel, msg: MessageContent) -> SourceResult<()> {
         let state = match self.state {
-            SourceState::Connected(ref server, _) => server,
+            SourceState::Connected(ref client, _) => client,
             _ => return Err(SourceError::Disconnected(self.id.clone())),
         };
         let target = match dst {
