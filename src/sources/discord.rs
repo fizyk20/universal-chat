@@ -162,6 +162,13 @@ impl DiscordSource {
                 });
             }
             PresenceUpdate { .. } => {}
+            PresencesReplace(_) => {}
+            MessageUpdate { .. } => {
+                let _ = sender.send(SourceEvent {
+                    source: id.clone(),
+                    event: Event::Other(format!("MessageUpdate")),
+                });
+            }
             MessageCreate(msg) => {
                 // don't react to own messages
                 if msg.author.id == state.user().id {
