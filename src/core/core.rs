@@ -59,7 +59,8 @@ impl Core {
                     let module: Box<Module> = builder(id.clone(), def.config.clone());
                     modules.push(ModuleDef {
                         priority: def.priority,
-                        subscriptions: def.subscriptions
+                        subscriptions: def
+                            .subscriptions
                             .iter()
                             .map(|(id, set)| (SourceId(id.clone()), set.iter().cloned().collect()))
                             .collect(),

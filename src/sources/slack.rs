@@ -1,7 +1,7 @@
 use core::*;
 use serde_json::{self, Value};
-use slack::{EventHandler, RtmClient};
 use slack::api::rtm::StartResponse;
+use slack::{EventHandler, RtmClient};
 use sources::*;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};

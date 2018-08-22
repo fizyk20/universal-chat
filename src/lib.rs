@@ -16,11 +16,11 @@ extern crate serde_json;
 extern crate slack;
 extern crate timer;
 
-mod sources;
 mod config;
 mod core;
 mod logger;
 mod modules;
+mod sources;
 
 pub use config::Config;
 pub use core::*;

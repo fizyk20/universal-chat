@@ -77,9 +77,10 @@ impl<T> DerefMut for Config<T> {
 /// A global object to access the configuration
 #[macro_export]
 macro_rules! config {
-    ($T: ty, $fname: expr) => {
+    ($T:ty, $fname:expr) => {
         lazy_static! {
-            pub static ref CONFIG : ::std::sync::Mutex<$crate::Config<$T>> = ::std::sync::Mutex::new($crate::Config::new($fname));
+            pub static ref CONFIG: ::std::sync::Mutex<$crate::Config<$T>> =
+                ::std::sync::Mutex::new($crate::Config::new($fname));
         }
-    }
+    };
 }

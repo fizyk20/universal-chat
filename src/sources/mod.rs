@@ -9,9 +9,9 @@ use std::sync::mpsc::RecvError;
 pub mod discord;
 #[cfg(feature = "irc")]
 pub mod irc;
-pub mod stdin;
 #[cfg(feature = "slack")]
 pub mod slack;
+pub mod stdin;
 
 #[cfg(feature = "discord")]
 pub use self::discord::DiscordSource;

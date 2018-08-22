@@ -1,7 +1,7 @@
 use core::*;
-use discord::{Discord, State};
-use discord::Error as DiscordError;
 use discord::model::{ChannelId, CurrentUser, UserId};
+use discord::Error as DiscordError;
+use discord::{Discord, State};
 use serde_json::{self, Value};
 use sources::*;
 use std::sync::mpsc::Sender;
@@ -127,7 +127,8 @@ impl DiscordSource {
         use discord::ChannelRef::*;
         match state.find_channel(channel_id).expect("Unknown channel") {
             Private(prv) => &prv.recipient.name,
-            Public(srv, _) => srv.members
+            Public(srv, _) => srv
+                .members
                 .iter()
                 .find(|m| m.user.id == user_id)
                 .map(|m| &m.user.name)
@@ -147,8 +148,8 @@ impl DiscordSource {
         id: &SourceId,
         sender: &Sender<SourceEvent>,
     ) {
-        use discord::ChannelRef::*;
         use discord::model::Event::*;
+        use discord::ChannelRef::*;
         match event {
             TypingStart {
                 user_id,
@@ -183,7 +184,8 @@ impl DiscordSource {
                         Channel::User(prv.recipient.name.clone()),
                     ),
                     Public(srv, publ) => {
-                        let member = srv.members
+                        let member = srv
+                            .members
                             .iter()
                             .find(|m| m.user.id == msg.author.id)
                             .map(|m| m.display_name().to_owned())
