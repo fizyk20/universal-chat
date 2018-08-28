@@ -1,5 +1,5 @@
 use core::{CoreAPI, SourceEvent};
-use serde_json::Value;
+use toml::Value;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ResumeEventHandling {

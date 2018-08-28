@@ -1,11 +1,11 @@
 use core::EventType;
 use serde::de::DeserializeOwned;
-use serde_json::{self, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
 use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
+use toml::{self, Value};
 
 /// Structure representing the configuration along with
 /// the path to the file where it is saved
@@ -56,7 +56,7 @@ impl<T> Config<T> {
             .expect("Couldn't read from file");
         Config {
             path: path_buf,
-            inner: serde_json::from_str(&config).unwrap(),
+            inner: toml::from_str(&config).unwrap(),
         }
     }
 }

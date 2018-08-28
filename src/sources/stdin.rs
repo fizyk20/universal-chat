@@ -1,9 +1,9 @@
 use core::{Event, SourceEvent, SourceId};
-use serde_json::Value;
 use sources::*;
 use std::io;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
+use toml::Value;
 
 pub struct StdinSource(JoinHandle<()>);
 

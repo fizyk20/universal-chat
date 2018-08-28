@@ -1,9 +1,9 @@
 use core::*;
 use irc::client::prelude::*;
-use serde_json::{self, Value};
 use sources::*;
 use std::sync::mpsc::{channel, Sender};
 use std::thread::{self, JoinHandle};
+use toml::Value;
 
 /// A helper enum for IrcSource
 enum SourceState {
@@ -33,7 +33,7 @@ impl IrcSource {
         config: Option<Value>,
     ) -> Box<EventSource> {
         let config = config.expect(&format!("No config given for IRC source {:?}!", source_id));
-        let config: Config = serde_json::from_value(config).ok().expect(&format!(
+        let config: Config = config.try_into().ok().expect(&format!(
             "Invalid configuration supplied to IRC source {:?}",
             source_id
         ));

@@ -3,11 +3,11 @@ use config::Config;
 use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
 use logger::*;
 use modules::*;
-use serde_json::Value;
 use sources::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use timer::{Guard, MessageTimer};
+use toml::Value;
 
 struct ModuleDef {
     object: Box<Module>,

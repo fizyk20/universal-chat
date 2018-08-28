@@ -1,10 +1,10 @@
 use core::*;
-use serde_json::{self, Value};
 use slack::api::rtm::StartResponse;
 use slack::{EventHandler, RtmClient};
 use sources::*;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
+use toml::Value;
 
 /// A helper enum for SlackSource
 enum SourceState {
@@ -50,7 +50,7 @@ impl SlackSource {
             "No config given for Slack source {:?}!",
             source_id
         ));
-        let config: SlackConfig = serde_json::from_value(config).ok().expect(&format!(
+        let config: SlackConfig = config.try_into().ok().expect(&format!(
             "Invalid configuration supplied to Slack source {:?}",
             source_id
         ));

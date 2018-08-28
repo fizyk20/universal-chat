@@ -2,10 +2,10 @@ use core::*;
 use discord::model::{ChannelId, CurrentUser, UserId};
 use discord::Error as DiscordError;
 use discord::{Discord, State};
-use serde_json::{self, Value};
 use sources::*;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
+use toml::Value;
 
 /// A helper enum for DiscordSource
 enum SourceState {
@@ -41,7 +41,7 @@ impl DiscordSource {
             "No config given for Discord source {:?}!",
             source_id
         ));
-        let config: DiscordConfig = serde_json::from_value(config).ok().expect(&format!(
+        let config: DiscordConfig = config.try_into().ok().expect(&format!(
             "Invalid configuration supplied to Discord source {:?}",
             source_id
         ));

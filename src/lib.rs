@@ -10,10 +10,10 @@ extern crate quick_error;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 #[cfg(feature = "slack")]
 extern crate slack;
 extern crate timer;
+extern crate toml;
 
 mod config;
 mod core;
