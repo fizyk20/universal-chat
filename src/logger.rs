@@ -18,15 +18,19 @@ pub struct Logger {
 }
 
 impl Logger {
-    fn gen_path(&self, source: &str, date: &Date<Local>) -> io::Result<PathBuf> {
+    fn gen_path(&self, source: &str, channel: &str, date: &Date<Local>) -> io::Result<PathBuf> {
         let base_dir = self.base_dir.as_path();
         let year_str = format!("{}", date.format("%Y"));
         let month_str = format!("{}", date.format("%m"));
         let day_str = format!("{}", date.format("%d"));
 
-        let path = base_dir.join(source).join(year_str).join(month_str);
+        let path = base_dir
+            .join(source)
+            .join(year_str)
+            .join(month_str)
+            .join(day_str);
         fs::create_dir_all(&path)?;
-        Ok(path.join(format!("{}.txt", day_str)))
+        Ok(path.join(format!("{}.txt", channel)))
     }
 
     pub fn new<P: AsRef<Path>>(path: P) -> Logger {
@@ -38,10 +42,11 @@ impl Logger {
         }
     }
 
-    pub fn log_with_mode<P: AsRef<str>>(
+    pub fn log_with_mode<P1: AsRef<str>, P2: AsRef<str>, P3: AsRef<str>>(
         &mut self,
-        source: &str,
-        what: P,
+        source: P1,
+        channel: P2,
+        what: P3,
         mode: LogMode,
     ) -> io::Result<()> {
         let now = Local::now();
@@ -49,7 +54,13 @@ impl Logger {
         let time_diff = now.signed_duration_since(self.last_log);
 
         if mode == LogMode::Console || mode == LogMode::Both {
-            println!("[{}] {}: {}", now_str, source, what.as_ref());
+            println!(
+                "[{}] {}/{}: {}",
+                now_str,
+                source.as_ref(),
+                channel.as_ref(),
+                what.as_ref()
+            );
         }
 
         if mode == LogMode::File || mode == LogMode::Both {
@@ -62,9 +73,15 @@ impl Logger {
                 self.day_passed = false;
             }
 
-            let path = self.gen_path(source, &self.cur_date)?;
+            let path = self.gen_path(source.as_ref(), channel.as_ref(), &self.cur_date)?;
             let mut file = OpenOptions::new().create(true).append(true).open(path)?;
-            let what = format!("[{}] {}\n", now_str, what.as_ref());
+            let what = format!(
+                "[{}] {}/{}: {}\n",
+                now_str,
+                source.as_ref(),
+                channel.as_ref(),
+                what.as_ref()
+            );
             file.write_all(what.as_bytes())?;
             self.last_log = now;
         }
@@ -72,7 +89,12 @@ impl Logger {
         Ok(())
     }
 
-    pub fn log<P: AsRef<str>>(&mut self, source: &str, what: P) -> io::Result<()> {
-        self.log_with_mode(source, what, LogMode::Both)
+    pub fn log<P1: AsRef<str>, P2: AsRef<str>, P3: AsRef<str>>(
+        &mut self,
+        source: P1,
+        channel: P2,
+        what: P3,
+    ) -> io::Result<()> {
+        self.log_with_mode(source, channel, what, LogMode::Both)
     }
 }

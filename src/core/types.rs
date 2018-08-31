@@ -10,6 +10,21 @@ pub enum Channel {
     Group(Vec<String>),
 }
 
+impl Channel {
+    pub fn as_str(&self) -> String {
+        match *self {
+            Channel::None => format!("[none]"),
+            Channel::Channel(ref s) => format!("#{}", s),
+            Channel::User(ref u) => format!("{}(priv)", u),
+            Channel::Group(ref v) => {
+                let mut v2 = v.clone();
+                v2.sort();
+                format!("{:?}", v2)
+            }
+        }
+    }
+}
+
 /// Content of a message
 #[derive(Clone, Debug)]
 pub enum MessageContent {

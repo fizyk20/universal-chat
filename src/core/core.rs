@@ -108,21 +108,27 @@ impl Core {
     }
 
     fn log_event(&mut self, event: &SourceEvent) {
-        let text = match event.event {
-            Event::ReceivedMessage(ref msg) => match msg.content {
-                MessageContent::Text(ref txt) => format!("<{}> {}", msg.author, txt),
-                MessageContent::Me(ref txt) => {
-                    format!("* {} {}", self.api.get_nick(&event.source), txt)
-                }
-                MessageContent::Image => format!("[Image]"),
-            },
-            Event::Disconnected(ref txt) => format!("Disconnected; reason: {}", txt),
-            Event::Other(ref txt) => txt.clone(),
-            _ => format!("{:?}", event.event),
+        let (channel, text) = match event.event {
+            Event::ReceivedMessage(ref msg) => (
+                msg.channel.as_str(),
+                match msg.content {
+                    MessageContent::Text(ref txt) => format!("<{}> {}", msg.author, txt),
+                    MessageContent::Me(ref txt) => {
+                        format!("* {} {}", self.api.get_nick(&event.source), txt)
+                    }
+                    MessageContent::Image => format!("[Image]"),
+                },
+            ),
+            Event::Disconnected(ref txt) => (
+                format!("[notice]"),
+                format!("Disconnected; reason: {}", txt),
+            ),
+            Event::Other(ref txt) => (format!("[notice]"), txt.clone()),
+            _ => (format!("[notice]"), format!("{:?}", event.event)),
         };
         self.api
             .logger
-            .log(&event.source.0, text)
+            .log(&event.source.0, channel, text)
             .ok()
             .expect("api.logger.log() failed");
     }
@@ -190,6 +196,7 @@ impl CoreAPI {
             .expect(&format!("Couldn't find source {:?}", source_id));
         let _ = self.logger.log(
             &source_id.0,
+            msg.channel.as_str(),
             msg.content.display_with_nick(source.get_nick()),
         );
         source.send(msg.channel, msg.content)
