@@ -87,8 +87,10 @@ impl Core {
 
     /// Calls connect() on all sources
     pub fn connect_all(&mut self) {
-        for (_, source) in self.api.sources.iter_mut() {
-            source.connect().unwrap();
+        for (s_id, source) in self.api.sources.iter_mut() {
+            source
+                .connect()
+                .expect(&format!("connect() failed for source {:?}", s_id));
         }
     }
 
@@ -118,7 +120,11 @@ impl Core {
             Event::Other(ref txt) => txt.clone(),
             _ => format!("{:?}", event.event),
         };
-        self.api.logger.log(&event.source.0, text).unwrap();
+        self.api
+            .logger
+            .log(&event.source.0, text)
+            .ok()
+            .expect("api.logger.log() failed");
     }
 
     fn get_subscribers<'a, 'b>(
@@ -163,7 +169,7 @@ impl CoreAPI {
         self.sources
             .get(&source_id)
             .map(|source| source.get_nick())
-            .unwrap()
+            .unwrap_or_else(|| "no-nick")
     }
 
     pub fn schedule_timer(&mut self, id: String, after: Duration) {
@@ -178,7 +184,10 @@ impl CoreAPI {
     }
 
     pub fn send(&mut self, source_id: &SourceId, msg: Message) -> SourceResult<()> {
-        let source = self.sources.get_mut(source_id).unwrap();
+        let source = self
+            .sources
+            .get_mut(source_id)
+            .expect(&format!("Couldn't find source {:?}", source_id));
         let _ = self.logger.log(
             &source_id.0,
             msg.content.display_with_nick(source.get_nick()),

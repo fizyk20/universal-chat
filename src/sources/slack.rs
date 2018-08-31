@@ -82,7 +82,9 @@ impl EventSource for SlackSource {
     }
 
     fn connect(&mut self) -> SourceResult<()> {
-        let client = RtmClient::login(&self.config.token).unwrap();
+        let client = RtmClient::login(&self.config.token)
+            .ok()
+            .expect("RtmClient::login failed");
         let sender = client.sender().clone();
         let src_sender = self.sender.clone();
         let response = client.start_response().clone();

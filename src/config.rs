@@ -56,7 +56,7 @@ impl<T> Config<T> {
             .expect("Couldn't read from file");
         Config {
             path: path_buf,
-            inner: toml::from_str(&config).unwrap(),
+            inner: toml::from_str(&config).expect("Config is an invalid TOML file"),
         }
     }
 }

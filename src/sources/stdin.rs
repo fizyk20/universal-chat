@@ -18,13 +18,17 @@ impl StdinSource {
             let stdin = io::stdin();
             loop {
                 let mut buffer = String::new();
-                stdin.read_line(&mut buffer).unwrap();
+                stdin
+                    .read_line(&mut buffer)
+                    .ok()
+                    .expect("stdin.read_line() failed");
                 sender
                     .send(SourceEvent {
                         source: source_id.clone(),
                         event: Event::DirectInput(buffer),
                     })
-                    .unwrap();
+                    .ok()
+                    .expect("Sender::send() failed in stdin");
             }
         });
         Box::new(StdinSource(handle))
