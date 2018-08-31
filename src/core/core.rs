@@ -189,7 +189,7 @@ impl CoreAPI {
         let _ = self.timer_guards.insert(id, guard);
     }
 
-    pub fn send(&mut self, source_id: &SourceId, msg: Message) -> SourceResult<()> {
+    pub fn send(&mut self, source_id: &SourceId, msg: Message) {
         let source = self
             .sources
             .get_mut(source_id)
@@ -199,6 +199,8 @@ impl CoreAPI {
             msg.channel.as_str(),
             msg.content.display_with_nick(source.get_nick()),
         );
-        source.send(msg.channel, msg.content)
+        if let Err(e) = source.send(msg.channel, msg.content) {
+            let _ = self.logger.log(&source_id.0, "ERROR", format!("{:?}", e));
+        }
     }
 }
