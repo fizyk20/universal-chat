@@ -1,6 +1,6 @@
-use core::*;
+use crate::core::*;
+use crate::sources::*;
 use irc::client::prelude::*;
-use sources::*;
 use std::sync::mpsc::{channel, Sender};
 use std::thread::{self, JoinHandle};
 use toml::Value;
@@ -64,7 +64,7 @@ fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
     match msg.command {
         PING(_, _) => vec![],
         PONG(_, _) => vec![],
-        PRIVMSG(from, txt) => vec![Event::ReceivedMessage(::core::Message {
+        PRIVMSG(from, txt) => vec![Event::ReceivedMessage(crate::core::Message {
             author: sender,
             channel: if from.starts_with("#") {
                 Channel::Channel(from)

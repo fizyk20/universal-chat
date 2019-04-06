@@ -1,8 +1,8 @@
-use core::*;
+use crate::core::*;
+use crate::sources::*;
 use discord::model::{ChannelId, CurrentUser, UserId};
 use discord::Error as DiscordError;
 use discord::{Discord, State};
-use sources::*;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
 use toml::Value;

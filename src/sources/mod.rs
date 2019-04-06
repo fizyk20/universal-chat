@@ -1,4 +1,4 @@
-use core::{Channel, EventSourceBuilder, MessageContent, SourceId};
+use crate::core::{Channel, EventSourceBuilder, MessageContent, SourceId};
 #[cfg(feature = "irc")]
 use irc::error::IrcError;
 use std::collections::HashMap;
@@ -6,19 +6,19 @@ use std::collections::HashMap;
 use std::sync::mpsc::RecvError;
 
 #[cfg(feature = "discord")]
-pub mod discord;
+pub mod discord_source;
 #[cfg(feature = "irc")]
-pub mod irc;
+pub mod irc_source;
 #[cfg(feature = "slack")]
-pub mod slack;
+pub mod slack_source;
 pub mod stdin;
 
 #[cfg(feature = "discord")]
-pub use self::discord::DiscordSource;
+pub use self::discord_source::DiscordSource;
 #[cfg(feature = "irc")]
-pub use self::irc::IrcSource;
+pub use self::irc_source::IrcSource;
 #[cfg(feature = "slack")]
-pub use self::slack::SlackSource;
+pub use self::slack_source::SlackSource;
 pub use self::stdin::StdinSource;
 
 lazy_static! {

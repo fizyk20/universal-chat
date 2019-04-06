@@ -1,4 +1,4 @@
-use core::{CoreAPI, SourceEvent};
+use crate::core::{CoreAPI, SourceEvent};
 use toml::Value;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

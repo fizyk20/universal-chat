@@ -1,4 +1,4 @@
-use core::EventType;
+use crate::core::EventType;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::fs;

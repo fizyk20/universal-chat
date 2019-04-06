@@ -1,7 +1,7 @@
-use core::*;
+use crate::core::*;
+use crate::sources::*;
 use slack::api::rtm::StartResponse;
 use slack::{EventHandler, RtmClient};
-use sources::*;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};
 use toml::Value;
@@ -183,7 +183,8 @@ impl EventHandler for SlackHandler {
                     "active" => vec![Event::UserOnline(nick.to_owned())],
                     "away" => vec![Event::UserOffline(nick.to_owned(), None)],
                     _ => vec![],
-                }).unwrap_or_else(Vec::new)
+                })
+                .unwrap_or_else(Vec::new)
             }
             Message(msg) => match *msg {
                 Standard(msg) => {
@@ -191,7 +192,7 @@ impl EventHandler for SlackHandler {
                         (msg.user, msg.channel, msg.text)
                     {
                         let resp = client.start_response();
-                        let msg = ::core::Message {
+                        let msg = crate::core::Message {
                             author: get_nick_by_id(resp, &sender)
                                 .unwrap_or("[no author]")
                                 .to_owned(),

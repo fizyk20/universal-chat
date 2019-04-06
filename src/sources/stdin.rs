@@ -1,5 +1,5 @@
-use core::{Event, SourceEvent, SourceId};
-use sources::*;
+use crate::core::{Event, SourceEvent, SourceId};
+use crate::sources::*;
 use std::io;
 use std::sync::mpsc::Sender;
 use std::thread::{self, JoinHandle};

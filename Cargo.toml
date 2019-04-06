@@ -2,6 +2,7 @@
 name = "universal-chat"
 version = "0.1.0"
 authors = ["Bartłomiej Kamiński <fizyk20@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 chrono = "0.4"

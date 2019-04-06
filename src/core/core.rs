@@ -1,9 +1,9 @@
+use crate::config::Config;
+use crate::core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
+use crate::logger::*;
+use crate::modules::*;
+use crate::sources::*;
 use chrono::Duration;
-use config::Config;
-use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
-use logger::*;
-use modules::*;
-use sources::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use timer::{Guard, MessageTimer};
