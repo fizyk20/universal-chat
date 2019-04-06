@@ -73,12 +73,12 @@ impl SlackSource {
 }
 
 impl EventSource for SlackSource {
-    fn get_nick(&self) -> &str {
+    fn get_nick(&self) -> String {
         self.state
             .start_response()
             .and_then(|resp| resp.slf.as_ref())
-            .and_then(|user| user.name.as_ref().map(|s| s as &str))
-            .unwrap_or("[no nick]")
+            .and_then(|user| user.name.clone())
+            .unwrap_or("[no nick]".to_string())
     }
 
     fn connect(&mut self) -> SourceResult<()> {

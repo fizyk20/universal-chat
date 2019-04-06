@@ -36,8 +36,8 @@ impl StdinSource {
 }
 
 impl EventSource for StdinSource {
-    fn get_nick(&self) -> &str {
-        ""
+    fn get_nick(&self) -> String {
+        String::new()
     }
 
     fn connect(&mut self) -> SourceResult<()> {

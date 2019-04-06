@@ -10,8 +10,10 @@ serde = "1.0"
 serde_derive = "1.0"
 toml = "0.4"
 lazy_static = "0.2"
-quick-error = "1.2"
 timer = "0.2"
 irc = { version = "0.13", optional = true }
 slack = { git = "https://github.com/fizyk20/slack-rs.git", branch = "less-blocking-reads", optional = true }
-discord = { git = "https://github.com/fizyk20/discord-rs.git", branch = "modifications", optional = true }
+serenity = { version = "0.5", optional = true }
+
+[features]
+discord = ["serenity"]

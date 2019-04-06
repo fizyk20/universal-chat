@@ -90,8 +90,8 @@ fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
 }
 
 impl EventSource for IrcSource {
-    fn get_nick(&self) -> &str {
-        &self.nick
+    fn get_nick(&self) -> String {
+        self.nick.clone()
     }
 
     fn connect(&mut self) -> SourceResult<()> {

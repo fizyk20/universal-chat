@@ -1,12 +1,9 @@
-use crate::core::{Channel, EventSourceBuilder, MessageContent, SourceId};
-#[cfg(feature = "irc")]
-use irc::error::IrcError;
+use crate::core::{Channel, EventSourceBuilder, MessageContent};
 use std::collections::HashMap;
-#[cfg(feature = "irc")]
-use std::sync::mpsc::RecvError;
 
 #[cfg(feature = "discord")]
 pub mod discord_source;
+mod error;
 #[cfg(feature = "irc")]
 pub mod irc_source;
 #[cfg(feature = "slack")]
@@ -15,6 +12,7 @@ pub mod stdin;
 
 #[cfg(feature = "discord")]
 pub use self::discord_source::DiscordSource;
+pub use self::error::SourceError;
 #[cfg(feature = "irc")]
 pub use self::irc_source::IrcSource;
 #[cfg(feature = "slack")]
@@ -35,47 +33,13 @@ lazy_static! {
     };
 }
 
-/// An error type for the application
-#[cfg(not(feature = "irc"))]
-quick_error! {
-    #[derive(Debug)]
-    pub enum SourceError {
-        Eof(id: SourceId) {}
-        Disconnected(id: SourceId) {}
-        ConnectionError(id: SourceId, txt: String) {}
-        InvalidChannel(id: SourceId, ch: Channel) {}
-        InvalidMessage(id: SourceId, msg: MessageContent) {}
-        Other(txt: String) {}
-    }
-}
-
-/// An error type for the application
-#[cfg(feature = "irc")]
-quick_error! {
-    #[derive(Debug)]
-    pub enum SourceError {
-        Eof(id: SourceId) {}
-        Disconnected(id: SourceId) {}
-        ConnectionError(id: SourceId, txt: String) {}
-        InvalidChannel(id: SourceId, ch: Channel) {}
-        InvalidMessage(id: SourceId, msg: MessageContent) {}
-        IrcError(err: IrcError) {
-            from()
-        }
-        RecvError(err: RecvError) {
-            from()
-        }
-        Other(txt: String) {}
-    }
-}
-
 /// A more concise result type
 pub type SourceResult<T> = Result<T, SourceError>;
 
 /// Trait representing a source of events
 pub trait EventSource {
     /// Gets the bot's nickname on this source
-    fn get_nick(&self) -> &str;
+    fn get_nick(&self) -> String;
     /// Connects to the source
     fn connect(&mut self) -> SourceResult<()>;
     /// Joins a channel in the source

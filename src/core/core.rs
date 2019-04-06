@@ -171,11 +171,11 @@ impl Core {
 }
 
 impl CoreAPI {
-    pub fn get_nick(&self, source_id: &SourceId) -> &str {
+    pub fn get_nick(&self, source_id: &SourceId) -> String {
         self.sources
             .get(&source_id)
             .map(|source| source.get_nick())
-            .unwrap_or_else(|| "no-nick")
+            .unwrap_or_else(|| "no-nick".to_string())
     }
 
     pub fn schedule_timer(&mut self, id: String, after: Duration) {
@@ -197,7 +197,7 @@ impl CoreAPI {
         let _ = self.logger.log(
             &source_id.0,
             msg.channel.as_str(),
-            msg.content.display_with_nick(source.get_nick()),
+            msg.content.display_with_nick(&source.get_nick()),
         );
         if let Err(e) = source.send(msg.channel, msg.content) {
             let _ = self.logger.log(&source_id.0, "ERROR", format!("{:?}", e));
