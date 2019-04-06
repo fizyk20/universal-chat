@@ -102,6 +102,9 @@ impl EventHandler for DiscordEventHandler {
             content,
             ..
         } = msg;
+        if author.name == self.nick() {
+            return;
+        }
         let msg = crate::core::Message {
             author: author.name,
             channel: Channel::Channel(
