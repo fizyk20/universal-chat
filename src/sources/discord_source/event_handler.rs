@@ -3,7 +3,7 @@ use crate::sources::*;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::model::id::ChannelId;
-use serenity::model::user::CurrentUser;
+use serenity::model::user::{CurrentUser, User};
 use serenity::prelude::{Context, EventHandler};
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
@@ -81,6 +81,18 @@ impl DiscordEventHandler {
             _ => return Err(SourceError::InvalidChannel(self.0.id.clone(), dst)),
         }
     }
+
+    fn replace_mentions(msg: String, mentions: &[User]) -> String {
+        let mut result = msg;
+        for mention in mentions {
+            let str_mention = format!("<@{}>", mention.id.0);
+            let str_mention_2 = format!("<@!{}>", mention.id.0);
+            let nick = format!("@{}", mention.name);
+            result = result.replace(&str_mention, &nick);
+            result = result.replace(&str_mention_2, &nick);
+        }
+        result
+    }
 }
 
 impl EventHandler for DiscordEventHandler {
@@ -100,11 +112,13 @@ impl EventHandler for DiscordEventHandler {
             author,
             channel_id,
             content,
+            mentions,
             ..
         } = msg;
         if author.name == self.nick() {
             return;
         }
+        let content_mentions_replaced = Self::replace_mentions(content, &mentions);
         let msg = crate::core::Message {
             author: author.name,
             channel: Channel::Channel(
@@ -113,7 +127,7 @@ impl EventHandler for DiscordEventHandler {
                     .clone()
                     .unwrap_or("[no channel]".to_string()),
             ),
-            content: MessageContent::Text(content),
+            content: MessageContent::Text(content_mentions_replaced),
         };
         let _ = self.0.sender.lock().unwrap().send(SourceEvent {
             source: self.0.id.clone(),
