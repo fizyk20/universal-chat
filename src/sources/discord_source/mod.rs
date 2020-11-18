@@ -31,7 +31,7 @@ impl DiscordSource {
         source_id: SourceId,
         sender: Sender<SourceEvent>,
         config: Option<Value>,
-    ) -> Box<EventSource> {
+    ) -> Box<dyn EventSource> {
         let config = config.expect(&format!(
             "No config given for Discord source {:?}!",
             source_id

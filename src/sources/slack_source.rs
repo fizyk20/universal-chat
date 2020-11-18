@@ -45,7 +45,7 @@ impl SlackSource {
         source_id: SourceId,
         sender: Sender<SourceEvent>,
         config: Option<Value>,
-    ) -> Box<EventSource> {
+    ) -> Box<dyn EventSource> {
         let config = config.expect(&format!(
             "No config given for Slack source {:?}!",
             source_id
@@ -175,16 +175,21 @@ impl EventHandler for SlackHandler {
             // process other events
             PresenceChange {
                 ref user,
+                ref users,
                 ref presence,
             } => {
                 let resp = client.start_response();
-                let nick = get_nick_by_id(resp, user);
-                nick.map(|nick| match presence as &str {
-                    "active" => vec![Event::UserOnline(nick.to_owned())],
-                    "away" => vec![Event::UserOffline(nick.to_owned(), None)],
-                    _ => vec![],
-                })
-                .unwrap_or_else(Vec::new)
+                user.into_iter()
+                    .chain(users.into_iter().flatten())
+                    .filter_map(|user| {
+                        let nick = get_nick_by_id(resp, user);
+                        nick.and_then(|nick| match presence as &str {
+                            "active" => Some(Event::UserOnline(nick.to_owned())),
+                            "away" => Some(Event::UserOffline(nick.to_owned(), None)),
+                            _ => None,
+                        })
+                    })
+                    .collect()
             }
             Message(msg) => match *msg {
                 Standard(msg) => {

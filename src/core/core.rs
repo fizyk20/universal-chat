@@ -10,13 +10,13 @@ use timer::{Guard, MessageTimer};
 use toml::Value;
 
 struct ModuleDef {
-    object: Box<Module>,
+    object: Box<dyn Module>,
     priority: u8,
     subscriptions: HashMap<SourceId, HashSet<EventType>>,
 }
 
 pub struct CoreAPI {
-    sources: HashMap<SourceId, Box<EventSource>>,
+    sources: HashMap<SourceId, Box<dyn EventSource>>,
     logger: Logger,
     timer: MessageTimer<SourceEvent>,
     timer_guards: HashMap<String, Guard>,
@@ -29,7 +29,8 @@ pub struct Core {
     api: CoreAPI,
 }
 
-pub type EventSourceBuilder = fn(SourceId, Sender<SourceEvent>, Option<Value>) -> Box<EventSource>;
+pub type EventSourceBuilder =
+    fn(SourceId, Sender<SourceEvent>, Option<Value>) -> Box<dyn EventSource>;
 
 impl Core {
     /// Creates the core
@@ -44,7 +45,7 @@ impl Core {
             for (id, def) in sources_def {
                 let source_id = SourceId(id.clone());
                 if let Some(builder) = BUILDERS.get(&def.source_type) {
-                    let source: Box<EventSource> =
+                    let source: Box<dyn EventSource> =
                         builder(source_id.clone(), sender.clone(), def.config.clone());
                     sources.insert(source_id, source);
                 }
@@ -56,7 +57,7 @@ impl Core {
             let modules_def = &config.modules;
             for (id, def) in modules_def {
                 if let Some(builder) = mod_builders.get(&def.module_type) {
-                    let module: Box<Module> = builder(id.clone(), def.config.clone());
+                    let module: Box<dyn Module> = builder(id.clone(), def.config.clone());
                     modules.push(ModuleDef {
                         priority: def.priority,
                         subscriptions: def
@@ -137,7 +138,7 @@ impl Core {
         source_id: &'a SourceId,
         modules: &'b mut Vec<ModuleDef>,
         event: EventType,
-    ) -> Vec<&'b mut Box<Module>> {
+    ) -> Vec<&'b mut Box<dyn Module>> {
         let mut subscribing_modules: Vec<_> = modules
             .iter_mut()
             .filter(|def| {

@@ -13,7 +13,7 @@ impl StdinSource {
         source_id: SourceId,
         sender: Sender<SourceEvent>,
         _: Option<Value>,
-    ) -> Box<EventSource> {
+    ) -> Box<dyn EventSource> {
         let handle = thread::spawn(move || {
             let stdin = io::stdin();
             loop {

@@ -31,7 +31,7 @@ impl IrcSource {
         source_id: SourceId,
         sender: Sender<SourceEvent>,
         config: Option<Value>,
-    ) -> Box<EventSource> {
+    ) -> Box<dyn EventSource> {
         let config = config.expect(&format!("No config given for IRC source {:?}!", source_id));
         let config: Config = config.try_into().ok().expect(&format!(
             "Invalid configuration supplied to IRC source {:?}",

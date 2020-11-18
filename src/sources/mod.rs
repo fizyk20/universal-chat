@@ -52,12 +52,12 @@ pub trait EventSource {
 
 #[cfg(test)]
 mod test {
-    use sources::*;
+    use crate::sources::*;
 
     #[test]
     fn test_object_safety() {
         // if this compiles, EventSource can be used as a trait object
-        let _ = |a: &mut EventSource| {
+        let _ = |a: &mut dyn EventSource| {
             a.reconnect().unwrap();
         };
     }

@@ -1,5 +1,6 @@
 use crate::core::*;
 use crate::sources::*;
+use serenity::http::client::Http;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::model::id::ChannelId;
@@ -9,10 +10,11 @@ use std::collections::HashMap;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex, RwLock};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 struct DiscordData {
     user: Option<CurrentUser>,
     channels: HashMap<String, ChannelId>,
+    http: Option<Arc<Http>>,
 }
 
 struct DiscordEventHandlerImpl {
@@ -32,15 +34,19 @@ impl DiscordEventHandlerImpl {
 }
 
 #[derive(Clone)]
-pub struct DiscordEventHandler(Arc<DiscordEventHandlerImpl>);
+pub struct DiscordEventHandler {
+    inner: Arc<DiscordEventHandlerImpl>,
+}
 
 impl DiscordEventHandler {
     pub fn new(id: SourceId, sender: Sender<SourceEvent>) -> Self {
-        Self(Arc::new(DiscordEventHandlerImpl::new(id, sender)))
+        Self {
+            inner: Arc::new(DiscordEventHandlerImpl::new(id, sender)),
+        }
     }
 
     pub fn nick(&self) -> String {
-        self.0
+        self.inner
             .data
             .read()
             .unwrap()
@@ -51,11 +57,11 @@ impl DiscordEventHandler {
     }
 
     fn send_to_channel(&mut self, dst: String, msg: MessageContent) -> SourceResult<()> {
-        let data = self.0.data.read().unwrap();
+        let data = self.inner.data.read().unwrap();
         let channel = match data.channels.get(&dst) {
             None => {
                 return Err(SourceError::InvalidChannel(
-                    self.0.id.clone(),
+                    self.inner.id.clone(),
                     Channel::Channel(dst),
                 ));
             }
@@ -64,9 +70,14 @@ impl DiscordEventHandler {
         let msg = match msg {
             MessageContent::Text(t) => t,
             MessageContent::Me(t) => t,
-            _ => return Err(SourceError::InvalidMessage(self.0.id.clone(), msg)),
+            _ => return Err(SourceError::InvalidMessage(self.inner.id.clone(), msg)),
         };
-        channel.say(msg)?;
+        {
+            let data = self.inner.data.read().unwrap();
+            if let Some(ref http) = data.http {
+                channel.say(&http, msg)?;
+            }
+        }
         Ok(())
     }
 
@@ -78,7 +89,7 @@ impl DiscordEventHandler {
         match dst {
             Channel::Channel(ch) => self.send_to_channel(ch, msg),
             Channel::User(usr) => self.send_to_user(usr, msg),
-            _ => return Err(SourceError::InvalidChannel(self.0.id.clone(), dst)),
+            _ => return Err(SourceError::InvalidChannel(self.inner.id.clone(), dst)),
         }
     }
 
@@ -96,18 +107,19 @@ impl DiscordEventHandler {
 }
 
 impl EventHandler for DiscordEventHandler {
-    fn ready(&self, _ctx: Context, ready: Ready) {
-        let mut data = self.0.data.write().unwrap();
+    fn ready(&self, ctx: Context, ready: Ready) {
+        let mut data = self.inner.data.write().unwrap();
+        data.http = Some(ctx.http.clone());
         data.user = Some(ready.user);
         for guild in &ready.guilds {
             let gid = guild.id();
-            for (cid, channel) in gid.channels().unwrap() {
+            for (cid, channel) in gid.channels(&ctx).unwrap() {
                 let _ = data.channels.insert(channel.name.clone(), cid);
             }
         }
     }
 
-    fn message(&self, _ctx: Context, msg: Message) {
+    fn message(&self, ctx: Context, msg: Message) {
         let Message {
             author,
             channel_id,
@@ -123,14 +135,14 @@ impl EventHandler for DiscordEventHandler {
             author: author.name,
             channel: Channel::Channel(
                 channel_id
-                    .name()
+                    .name(&ctx)
                     .clone()
                     .unwrap_or("[no channel]".to_string()),
             ),
             content: MessageContent::Text(content_mentions_replaced),
         };
-        let _ = self.0.sender.lock().unwrap().send(SourceEvent {
-            source: self.0.id.clone(),
+        let _ = self.inner.sender.lock().unwrap().send(SourceEvent {
+            source: self.inner.id.clone(),
             event: Event::ReceivedMessage(msg),
         });
     }
